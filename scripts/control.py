@@ -73,28 +73,28 @@ def dynamic_model(p,action):
 
 
 
-def human_cheetah_dynamic_model(p,action): 
-    """
-    p0: dog x  
-    p1: dog y  
-    p2: dog theta  
-    p3: phi  
-    p4: distance_v  
-    a0: vx  
-    a1: vy  
-    a2: w
-    """
-    global L
-    global dt
-    L = 0.85
-    dt = 0.1
-    next_p2= p[2]+dt*action[2]*0.6
-    next_p0= p[0]+dt*np.cos(next_p2)*action[0]*0.8 - dt*np.sin(next_p2)*action[1]
-    next_p1= p[1]+dt*np.sin(next_p2)*action[0]*0.8 +  dt*np.cos(next_p2)*action[1]
-    next_p3= p[3] - np.arcsin( ( np.sqrt(action[0]*action[0] )*dt * np.sin( (p[3]) )/L ) ) 
-    # next_p3= p[3]+ np.arcsin( (np.sqrt(action[0]*action[0] + action[1]*action[1])*0.1)*np.sin( (p[3]+ np.pi/2 + np.arctan(action[0]/action[1]))/L ) )
-    next_p=np.array([next_p0,next_p1,next_p2,next_p3,p[4] ] ) 
-    return next_p,action
+# def human_cheetah_dynamic_model(p,action): 
+#     """
+#     p0: dog x  
+#     p1: dog y  
+#     p2: dog theta  
+#     p3: phi  
+#     p4: distance_v  
+#     a0: vx  
+#     a1: vy  
+#     a2: w
+#     """
+#     global L
+#     global dt
+#     L = 0.85
+#     dt = 0.1
+#     next_p2= p[2]+dt*action[2]*0.6
+#     next_p0= p[0]+dt*np.cos(next_p2)*action[0]*0.8 - dt*np.sin(next_p2)*action[1]
+#     next_p1= p[1]+dt*np.sin(next_p2)*action[0]*0.8 +  dt*np.cos(next_p2)*action[1]
+#     next_p3= p[3] - np.arcsin( ( np.sqrt(action[0]*action[0] )*dt * np.sin( (p[3]) )/L ) ) 
+#     # next_p3= p[3]+ np.arcsin( (np.sqrt(action[0]*action[0] + action[1]*action[1])*0.1)*np.sin( (p[3]+ np.pi/2 + np.arctan(action[0]/action[1]))/L ) )
+#     next_p=np.array([next_p0,next_p1,next_p2,next_p3,p[4] ] ) 
+#     return next_p,action
 
 
 def dist_all( times,p):
@@ -122,7 +122,7 @@ def step_global_control(target_position, next_target_position,times):
     # pre_close_loop_input[1] =   open_loop_input[1] 
     pre_close_loop_input[0] = 0  
     pre_close_loop_input[2] =  0
-    possible_tune = [human_cheetah_dynamic_model(curr_state,np.array([pre_close_loop_input[0]+tune[0],0+tune[1],pre_close_loop_input[2]+tune[2]])) for tune in tune_set]
+    possible_tune = [(curr_state,np.array([pre_close_loop_input[0]+tune[0],0+tune[1],pre_close_loop_input[2]+tune[2]])) for tune in tune_set]
     next_p,close_loop_input= possible_tune[np.argmin(cost(possible_tune,next_target_position,times))]
     cmd(close_loop_input)
 
@@ -157,9 +157,6 @@ def global_path_callback(data):
         desired_global_path[0][i,0]=data.data[0+5*i]
         desired_global_path[0][i,1]=data.data[1+5*i]
         desired_global_path[0][i,2]=data.data[2+5*i]
-        desired_global_path[0][i,3]=data.data[3+5*i]
-        desired_global_path[0][i,4]=data.data[4+5*i]
-
 
 def angle_callback(data):
     curr_state[3] = float( 90 - data.data) * np.pi/180
