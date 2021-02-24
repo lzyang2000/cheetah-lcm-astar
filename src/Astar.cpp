@@ -5,6 +5,14 @@
 #include "Astar.h"
 
 namespace pathplanning{
+
+double jump_height = 0.3;
+
+struct collision { 
+    bool is_walkable, is_jump; 
+}; 
+  
+
 float min(float a,float b ){
     if(a<=b)
         return a;
@@ -132,10 +140,11 @@ void Astar::MapProcess(Mat& Mask)
     }
 }
 
-bool Astar::CheckCollision(Mat _LabelMap, int x, int y, double theta,double length)
+Struct Astar::CheckCollision(Mat _LabelMap, int x, int y, double theta)
 {
-    bool is_walkable = true;
-    int length_int = floor(length*20);
+    Struct collision; 
+    collision.is_walkable = true;
+    collision.is_jump = false;
     // double a_2 = (((double)length_int)/2)*(((double)length_int)/2);
     double a_2 = 10;
     double b_2 = 10;
@@ -146,18 +155,22 @@ bool Astar::CheckCollision(Mat _LabelMap, int x, int y, double theta,double leng
             double y_s = -(xi-x)*sin(theta)+(y-yi)*cos(theta);
             if( (x_s*x_s/a_2 + y_s*y_s/b_2 <= 1) && _LabelMap.at<uchar>(yi, xi) == obstacle )
             {
-                is_walkable=false;
-                return is_walkable;
+                // if( _LabelMap.at<uchar>(yi, xi).height<jump_height){ TODO: get height
+                //     collision.is_jump=true;
+                // }
+                collision.is_walkable=false;
+
+                return collision;
             }
 
         }
     }
 
-    return is_walkable;
+    return collision;
     // return _LabelMap.at<uchar>(yi, xi) == obstacle;
 }
 
-void Astar::RobotKinematics(Mat neighbor,Mat _LabelMap,int &x,int &y, double &theta_, double &length_,double &alpha_,int cx,int cy,double ct,double cl,int k)
+void Astar::RobotKinematics(Mat neighbor,Mat _LabelMap,int &x,int &y, double &theta_, int cx,int cy,double ct,int k)
 {
     y = cy + neighbor.at<char>(k, 0);
     x = cx + neighbor.at<char>(k, 1);
@@ -167,28 +180,6 @@ void Astar::RobotKinematics(Mat neighbor,Mat _LabelMap,int &x,int &y, double &th
         k=k-8;
     }
     theta_ = k* 3.1416/4.0;
-    if (theta_ == ct)
-        alpha_=0;
-    else 
-        alpha_=theta_-ct;
-    length_ = 1;
-    int length_int=floor(length_*20);
-    for(int xi=x-length_int/2; xi<=x+length_int/2; xi++)
-    {
-        for(int yi=y-length_int/2; yi<=y+length_int/2; yi++){
-            if(_LabelMap.at<uchar>(yi, xi) == obstacle )
-            {
-               length_ = 1;
-               continue;
-            }
-
-        }
-    }
-    
-    // y = cy + neighbor.at<char>(k, 0);
-    // x = cx + neighbor.at<char>(k, 1);
-    // theta_ = ct + ((double)neighbor.at<char>(k, 2))*0.3;
-    // length_ = cl;
 }
 
 Node* Astar::FindPath()
@@ -236,8 +227,8 @@ Node* Astar::FindPath()
         for(int k = 0;k < neighbor.rows;k++)
         {
             int y,x;
-            double theta_,length_,alpha_;
-            RobotKinematics(neighbor,_LabelMap,x,y,theta_,length_,alpha_,curX,curY,curtheta,curlength,k);
+            double theta_;
+            RobotKinematics(neighbor,_LabelMap,x,y,theta_,curX,curY,curtheta,k);
             
 
 
@@ -248,11 +239,13 @@ Node* Astar::FindPath()
             if(_LabelMap.at<uchar>(y, x) == free || _LabelMap.at<uchar>(y, x) == inOpenList)
             {
 //--------------------------------------- Determine walkable------------------------------------
-                bool walkable = true;
+                Struct collision; 
+                collision.is_walkable = true;
+                collision.is_jump = false;
 
-                walkable = CheckCollision( _LabelMap,x,y,theta_,length_);
+                collision = CheckCollision( _LabelMap,x,y,theta_);
 //--------------------------------- Determine walkable done------------------------------------
-                if(!walkable)
+                if(!collision.is_walkable && collision.is_jump)
                 {
                     continue;
                 }
