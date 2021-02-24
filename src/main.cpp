@@ -14,7 +14,7 @@
 #include "OccMapTransform.h"
 #include <gazebo_msgs/ModelStates.h>
 #include <tf/tf.h>
-#include "Point_5D.h"
+#include "Point_3D.h"
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
@@ -40,7 +40,7 @@ nav_msgs::Path path;
 pathplanning::AstarConfig config;
 pathplanning::Astar astar;
 OccupancyGridParam OccGridParam;
-Point_5D startPoint, targetPoint;
+Point_3D startPoint, targetPoint;
 
 Mat global_Map;
 Mat global_Mask;
@@ -102,7 +102,7 @@ void MapCallback(const nav_msgs::OccupancyGrid& msg)
 void StartPointCallback(const gazebo_msgs::ModelStates& msg)
 {
     cout<<msg.pose[2].position.x<<"  "<<msg.pose[2].position.y;
-    Point_5D src_point(msg.pose[2].position.x, msg.pose[2].position.y);
+    Point_3D src_point(msg.pose[2].position.x, msg.pose[2].position.y);
     
 //     cout<<msg.pose[2].position.x<<"  "<<msg.pose[2].position.y;
 
@@ -124,7 +124,7 @@ void StartPointCallback(const gazebo_msgs::ModelStates& msg)
 
 void StartPointCallback_for_real_time(const geometry_msgs::PoseWithCovarianceStamped& msg)
 {
-    Point_5D src_point(msg.pose.pose.position.x, msg.pose.pose.position.y);
+    Point_3D src_point(msg.pose.pose.position.x, msg.pose.pose.position.y);
     OccGridParam.Map2ImageTransform(src_point, startPoint);
     
     double roll, pitch, yaw;
@@ -140,13 +140,13 @@ void StartPointCallback_for_real_time(const geometry_msgs::PoseWithCovarianceSta
         start_flag = true;
     }
 
-   ROS_INFO("startPoint: %f %f %f %f %f %f", msg.pose.pose.position.x, msg.pose.pose.position.y,
-            startPoint.x, startPoint.y, startPoint.theta,startPoint.length );
+   ROS_INFO("startPoint: %f %f %f %f %f", msg.pose.pose.position.x, msg.pose.pose.position.y,
+            startPoint.x, startPoint.y, startPoint.theta );
 }
 
 void StartPointCallback1(const geometry_msgs::PoseWithCovarianceStamped& msg)
 {
-    Point_5D src_point(msg.pose.pose.position.x, msg.pose.pose.position.y);
+    Point_3D src_point(msg.pose.pose.position.x, msg.pose.pose.position.y);
     OccGridParam.Map2ImageTransform(src_point, startPoint);
     
     double roll, pitch, yaw;
@@ -162,13 +162,13 @@ void StartPointCallback1(const geometry_msgs::PoseWithCovarianceStamped& msg)
         start_flag = true;
     }
 
-   ROS_INFO("startPoint: %f %f %f %f %f %f", msg.pose.pose.position.x, msg.pose.pose.position.y,
-            startPoint.x, startPoint.y, startPoint.theta,startPoint.length );
+   ROS_INFO("startPoint: %f %f %f %f %f", msg.pose.pose.position.x, msg.pose.pose.position.y,
+            startPoint.x, startPoint.y, startPoint.theta );
 }
 
 void TargetPointtCallback(const geometry_msgs::PoseStamped& msg)
 {
-    Point_5D src_point(msg.pose.position.x, msg.pose.position.y);
+    Point_3D src_point(msg.pose.position.x, msg.pose.position.y);
     OccGridParam.Map2ImageTransform(src_point, targetPoint);
 
     double roll, pitch, yaw;
@@ -243,11 +243,11 @@ int main(int argc, char * argv[])
         {
             int sequ = 0;
             // Start planning path
-            vector<Point_5D> PathList;
+            vector<Point_3D> PathList;
             astar.PathPlanning(startPoint, targetPoint, PathList);
             // astar.DrawPath(global_Map, PathList, global_Mask);
             
-            global_path.data.resize(PathList.size()*5);
+            global_path.data.resize(PathList.size()*3);
 
             if(!PathList.empty())
             {
@@ -262,7 +262,7 @@ int main(int argc, char * argv[])
                 for(int i=0;i<PathList.size();i++)
                 {
                     
-                    Point_5D dst_point;
+                    Point_3D dst_point;
                     OccGridParam.Image2MapTransform(PathList[i], dst_point);
                     geometry_msgs::PoseStamped pose_stamped;
                     pose_stamped.header.seq = sequ;
@@ -278,30 +278,9 @@ int main(int argc, char * argv[])
                     global_path.data[i*5+0]=dst_point.x;
                     global_path.data[i*5+1]=dst_point.y;
                     global_path.data[i*5+2]=dst_point.theta;
-                    global_path.data[i*5+3]=dst_point.alpha;
-                    global_path.data[i*5+4]=1;
                     // pose_stamped.pose.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, 0, dst_point.theta );
 //-------------------------------draw--------------------------------//
                     if (i%1 == 0){
-                        marker_people.header.stamp = ros::Time::now();
-                        marker_people.header.frame_id = "map";
-                        marker_people.id = marker_id;
-                        marker_people.type = visualization_msgs::Marker::CYLINDER;
-                        marker_people.pose.position.x=dst_point.x - (dst_point.length)*cos(dst_point.theta-dst_point.alpha);
-                        marker_people.pose.position.y=dst_point.y - (dst_point.length)*sin(dst_point.theta-dst_point.alpha);
- 
-                        marker_people.pose.position.z=0;
-                        marker_people.pose.orientation=tf::createQuaternionMsgFromRollPitchYaw(0, 0, dst_point.theta );
-                        // marker.pose.orientation.x = 0.0;
-                        // marker.pose.orientation.y = 0.0;
-                        // marker.pose.orientation.z = 0.0;
-                        // marker.pose.orientation.w = 1.0;
-                        marker_people.scale.x = 0.4;
-                        marker_people.scale.y = 0.4;
-                        marker_people.scale.z = 1.5;
-                        marker_people.color.a= 1.0;
-                        marker_people.color.r = 0;
-                        marker_people.color.g=1;
                         marker_people.color.b=0;
 
 
@@ -324,32 +303,9 @@ int main(int argc, char * argv[])
                         marker.color.r = 0;
                         marker.color.g=1;
                         marker.color.b=0;
-
-
-                        marker_line.header.stamp = ros::Time::now();
-                        marker_line.header.frame_id = "map";
-                        marker_line.id = marker_id;
-                        marker_line.type=visualization_msgs::Marker::LINE_LIST;
-                        geometry_msgs::Point people_p;
-                        geometry_msgs::Point dog_p;
-                        people_p.x=marker_people.pose.position.x;
-                        people_p.y=marker_people.pose.position.y;
-                        people_p.z=marker_people.pose.position.z;
-                        dog_p.x=marker.pose.position.x;
-                        dog_p.y=marker.pose.position.y;
-                        dog_p.z=2*marker.pose.position.z;
-                        marker_line.scale.x=0.1;
-                        marker_line.points.push_back(people_p);
-                        marker_line.points.push_back(dog_p);
-                        marker_line.color.a= 1.0;
-                        marker_line.color.r = 0;
-                        marker_line.color.g=0;
-                        marker_line.color.b=1;
                         if (i == PathList.size()-1)
                         {
                             markerarray.markers.push_back(marker);
-                            markerarray_people.markers.push_back(marker_people);
-                            markerarray_line.markers.push_back(marker_line);         
                             // cout<<PathList[i].length<<endl;
                             marker_id++;
                         }
@@ -364,9 +320,6 @@ int main(int argc, char * argv[])
                 path_pub.publish(path);
             
                 marker_pub.publish(markerarray);
-                marker_line_pub.publish(markerarray_line);
-                marker_people_pub.publish(markerarray_people);
-
                 global_pub.publish(global_path);
 
                 ROS_INFO("Find a valid path successfully");

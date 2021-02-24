@@ -145,27 +145,18 @@ Struct Astar::CheckCollision(Mat _LabelMap, int x, int y, double theta)
     Struct collision; 
     collision.is_walkable = true;
     collision.is_jump = false;
-    // double a_2 = (((double)length_int)/2)*(((double)length_int)/2);
-    double a_2 = 10;
-    double b_2 = 10;
-    for(int xi=x-length_int/2; xi<=x+length_int/2; xi++)
+
+    double x_s = (xi-x)*cos(theta)+(y-yi)*sin(theta);
+    double y_s = -(xi-x)*sin(theta)+(y-yi)*cos(theta);
+    if(_LabelMap.at<uchar>(yi, xi) == obstacle )
     {
-        for(int yi=y-length_int/2; yi<=y+length_int/2; yi++){
-            double x_s = (xi-x)*cos(theta)+(y-yi)*sin(theta);
-            double y_s = -(xi-x)*sin(theta)+(y-yi)*cos(theta);
-            if( (x_s*x_s/a_2 + y_s*y_s/b_2 <= 1) && _LabelMap.at<uchar>(yi, xi) == obstacle )
-            {
-                // if( _LabelMap.at<uchar>(yi, xi).height<jump_height){ TODO: get height
-                //     collision.is_jump=true;
-                // }
-                collision.is_walkable=false;
+        // if( _LabelMap.at<uchar>(yi, xi).height<jump_height){ TODO: get height
+        //     collision.is_jump=true;
+        // }
+        collision.is_walkable=false;
 
-                return collision;
-            }
-
-        }
+        return collision;
     }
-
     return collision;
     // return _LabelMap.at<uchar>(yi, xi) == obstacle;
 }
@@ -245,7 +236,7 @@ Node* Astar::FindPath()
 
                 collision = CheckCollision( _LabelMap,x,y,theta_);
 //--------------------------------- Determine walkable done------------------------------------
-                if(!collision.is_walkable && collision.is_jump)
+                if(!collision.is_walkable && !collision.is_jump)
                 {
                     continue;
                 }
@@ -260,6 +251,9 @@ Node* Astar::FindPath()
                 }
                 else{
                     addG = 10;
+                }
+                if(collision.is_jump){
+                    addG = addG+5; //TODO: jump cost
                 }
                 G = CurNode->G + addG;
                 if(config.Euclidean)
@@ -315,23 +309,21 @@ Node* Astar::FindPath()
     return NULL; // Can not find a valid path
 }
 
-void Astar::Smooth(vector<Point_5D>& path){
+void Astar::Smooth(vector<Point_3D>& path){
     for(int i=0;i<path.size();i++){
         int num = 1;
         float low = max(0,i-num);
         float high = min(path.size()-1,i+num);
-        float x=0,y=0,theta=0,alpha=0;
+        float x=0,y=0,theta=0
         for(int j=low;j<=high;j++)
         {
             x += path[j].x;
             y += path[j].y;
             theta += path[j].theta;
-            alpha += path[j].alpha;
         }
         path[i].x = x/(high-low+1);
         path[i].y = y/(high-low+1);
         path[i].theta = theta/(high-low+1);
-        path[i].alpha = alpha/(high-low+1);
 
         // path[i].x = 0;
         // path[i].y = 0;
@@ -344,7 +336,7 @@ void Astar::Smooth(vector<Point_5D>& path){
     }
 }
 
-void Astar::GetPath(Node* TailNode, vector<Point_5D>& path)
+void Astar::GetPath(Node* TailNode, vector<Point_3D>& path)
 {
     PathList.clear();
     path.clear();

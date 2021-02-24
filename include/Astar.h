@@ -25,11 +25,11 @@ enum NodeType{
 
 
 struct Node{
-    Point_5D point;  // node coordinate
+    Point_3D point;  // node coordinate
     int F, G, H;  // cost
     Node* parent; // parent node
 
-    Node(Point_5D _point = Point_5D(0, 0)):point(_point), F(0), G(0), H(0), parent(NULL)
+    Node(Point_3D _point = Point_3D(0, 0)):point(_point), F(0), G(0), H(0), parent(NULL)
     {
         
     }

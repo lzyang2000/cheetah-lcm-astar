@@ -29,7 +29,7 @@ void OccupancyGridParam::GetOccupancyGridParam(nav_msgs::OccupancyGrid OccGrid)
     t = Mat(Vec2d(x, y), CV_64FC1);
 }
 
-void OccupancyGridParam::Image2MapTransform(Point_5D& src_point, Point_5D& dst_point)
+void OccupancyGridParam::Image2MapTransform(Point_3D& src_point, Point_3D& dst_point)
 {
     // Upside down
     Mat P_src = Mat(Vec2d(src_point.x, height - 1 - src_point.y), CV_64FC1);
@@ -39,11 +39,9 @@ void OccupancyGridParam::Image2MapTransform(Point_5D& src_point, Point_5D& dst_p
     dst_point.x = P_dst.at<double>(0, 0);
     dst_point.y = P_dst.at<double>(1, 0);
     dst_point.theta= src_point.theta;
-    dst_point.length = src_point.length;
-    dst_point.alpha = src_point.alpha;
 }
 
-void OccupancyGridParam::Map2ImageTransform(Point_5D& src_point, Point_5D& dst_point)
+void OccupancyGridParam::Map2ImageTransform(Point_3D& src_point, Point_3D& dst_point)
 {
     Mat P_src = Mat(Vec2d(src_point.x, src_point.y), CV_64FC1);
     // Rotate and translate
@@ -52,6 +50,4 @@ void OccupancyGridParam::Map2ImageTransform(Point_5D& src_point, Point_5D& dst_p
     dst_point.x = round(P_dst.at<double>(0, 0));
     dst_point.y = height - 1 - round(P_dst.at<double>(1, 0));
     dst_point.theta= src_point.theta;
-    dst_point.length = src_point.length;
-    dst_point.alpha = src_point.alpha;
 }
