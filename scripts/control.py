@@ -106,7 +106,7 @@ def dist_all( times,p):
 def cost( possible_tune, goal, times):
     return np.array([distance_global(goal,p[0]) for p in possible_tune])    
 
-def step_control(target_position, next_target_position, open_loop_input,times):
+def step_control(target_position, next_target_position,times):
     pre_close_loop_input=np.zeros(2)
     # pre_close_loop_input[0] = open_loop_input[0]  
     # pre_close_loop_input[1] =   open_loop_input[1] 
@@ -207,7 +207,7 @@ def auto():
         next_desired_state = desired_global_path[0][times+1]
         # command = np.array([ linear_speed(next_desired_state, desired_state) , angular_speed(next_desired_state, desired_state) ]) 
         
-        step_global_control(desired_state, next_desired_state ,times)
+        step_control(desired_state, next_desired_state ,times)
         rate.sleep()
         # times = times + 1
 
